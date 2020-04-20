@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtWidgets import QMessageBox, QInputDialog
 from gui import Ui_Widget, LoginDialog
+import motdconnect
+
 
 class Task(QWidget, Ui_Widget):
     """
@@ -18,6 +20,9 @@ class Task(QWidget, Ui_Widget):
         self.endBtn.clicked.connect(self.end)
 
     def login(self):
+        """
+        user login to app
+        """
         slogin, password, ok = LoginDialog.getLoginPassword(self)
         if not ok:
             return
@@ -25,6 +30,12 @@ class Task(QWidget, Ui_Widget):
         if not slogin or not password:
             QMessageBox.warning(self, 'Błąd',
                                 'Pusty login lub hasło!', QMessageBox.Ok)
+            return
+
+        self.user = motdconnect.tolog(slogin, password)
+
+        if self.user is None:
+            QMessageBox.critical(self, 'Błąd', 'Błędne hasło', QMessageBox.Ok)
             return
 
         QMessageBox.information(self,
@@ -38,8 +49,8 @@ class Task(QWidget, Ui_Widget):
 
 if __name__ == '__main__':
     import sys
-
     app = QApplication(sys.argv)
+    motdconnect.connect()
     winapp = Task()
     winapp.show()
     winapp.move(350, 200)

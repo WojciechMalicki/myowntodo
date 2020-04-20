@@ -2,6 +2,7 @@
 
 from peewee import *
 from datetime import datetime
+from hashlib import sha256
 
 dbbase = SqliteDatabase('myowntodo.db')
 
@@ -19,7 +20,7 @@ class User(BaseModel):
     password = CharField()
 
     class Meta:
-        order_by('login')
+        order_by = ('login',)
 
 class Task(BaseModel):
     taskId = IntegerField(primary_key = True, column_name = "id", index = True)
@@ -31,38 +32,42 @@ class Task(BaseModel):
     done = BooleanField(default = False)
 
     class Meta:
-        order_by = ('value')
+        order_by = ('value',)
+
+def hexToStr(passwd):
+    return str(sha256(passwd.encode('utf-8')).hexdigest())
 
 def connect():
     dbbase.connect()
-    dbbase.create_tables([User, Task], True)
-    testDataLoad()
+    dbbase.create_tables([User, Task])
+    loadTestData()
     return True
 
 def tolog(login, password):
     try:
-        User, created = User.get_or_create(login = login, password = password)
-        return User
+        user, created = User.get_or_create(login = login, password = hexToStr(password))
+        return user
     except IntegrityError:
         return None
 
-def loadData():
+def loadTestData():
     """
     Preparation of initial data
     """
-    if User.select().count > 0:
+    if User.select().count() > 0:
         return
+
     users = [
     ['Adam', '123'],
     ['Ewa', '123']
     ]
     tasks = [
-    ['Napisać 200 linijek kodu', 'Napisać 200 linijek kodu w rozpoczetych projektach', 480, 2,False]
+    ['Napisać 200 linijek kodu', 'Napisać 200 linijek kodu w rozpoczetych projektach', 480, 2,False],
     ['Zrobic porządek z mailami', 'Uporządkowac skrzynkę odbiorczą', 100, 1,False]
     ]
 
     for user in users:
-        u = User(login = user[0], password = user[1])
+        u = User(login = user[0], password = hexToStr(user[1]))
         u.save()
 
     for task in tasks:
