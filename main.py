@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtWidgets import QMessageBox, QInputDialog
 from gui import Ui_Widget, LoginDialog
+from tabmodel import TabModel
 import motdconnect
 
 
@@ -38,8 +39,14 @@ class Task(QWidget, Ui_Widget):
             QMessageBox.critical(self, 'Błąd', 'Błędne hasło', QMessageBox.Ok)
             return
 
-        QMessageBox.information(self,
-            'Dane logowania', 'Podano: ' + slogin + ' ' + password, QMessageBox.Ok)
+        tasks = motdconnect.readData(self.user)
+        model.update(tasks)
+        model.layoutChanged.emit()
+        self.refreshView()
+
+
+    def refreshView(self):
+        self.view.setModel(model) # model transfer to view
 
 
     def end(self):
@@ -51,6 +58,7 @@ if __name__ == '__main__':
     import sys
     app = QApplication(sys.argv)
     motdconnect.connect()
+    model = TabModel()
     winapp = Task()
     winapp.show()
     winapp.move(350, 200)
