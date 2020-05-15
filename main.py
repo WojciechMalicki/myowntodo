@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QLineEdit
 from PyQt5.QtWidgets import QMessageBox, QInputDialog
-from gui import Ui_Widget, LoginDialog
+from PyQt5.QtGui import QIcon
+from gui import Ui_Widget
 from tabmodel import TabModel
 import motdconnect
+import motdparser
 
 
 class Task(QWidget, Ui_Widget):
@@ -16,43 +18,20 @@ class Task(QWidget, Ui_Widget):
     def __init__(self, parent=None):
         super(Task, self).__init__(parent)
         self.setupUi(self)
-
-        self.loginBtn.clicked.connect(self.login)
-        self.endBtn.clicked.connect(self.end)
-
-    def login(self):
-        """
-        user login to app
-        """
-        slogin, password, ok = LoginDialog.getLoginPassword(self)
-        if not ok:
-            return
-
-        if not slogin or not password:
-            QMessageBox.warning(self, 'Błąd',
-                                'Pusty login lub hasło!', QMessageBox.Ok)
-            return
-
-        self.user = motdconnect.tolog(slogin, password)
-
-        if self.user is None:
-            QMessageBox.critical(self, 'Błąd', 'Błędne hasło', QMessageBox.Ok)
-            return
-
-        tasks = motdconnect.readData(self.user)
-        model.update(tasks)
-        model.layoutChanged.emit()
-        self.refreshView()
+        self.commandLine.returnPressed.connect(self.onEnterPressed)
+        self.configuration()
 
 
-    def refreshView(self):
-        self.view.setModel(model) # model transfer to view
+    def configuration(self):
+        self.setGeometry(30, 30, 300, 400)
+        self.setWindowTitle("Colitodoli")
+        self.setWindowIcon(QIcon('colitodoli.png'))
+        self.show()
 
-
-    def end(self):
-        self.close()
-
-
+    def onEnterPressed(self):
+        print(self.commandLine.text())
+        motdparser.command_parse(self.commandLine.text())
+        self.commandLine.clear()
 
 if __name__ == '__main__':
     import sys
@@ -60,6 +39,4 @@ if __name__ == '__main__':
     motdconnect.connect()
     model = TabModel()
     winapp = Task()
-    winapp.show()
-    winapp.move(350, 200)
     sys.exit(app.exec_())
